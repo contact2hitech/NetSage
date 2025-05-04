@@ -82,6 +82,3 @@ MIT License © 2025 Your Name
 _“Measure what you consume — visualize what you control.”_
 
 ---
-```
-
----
