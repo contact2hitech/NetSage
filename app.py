@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from datetime import datetime
 
 st.set_page_config("Internet Usage Viewer", layout="wide")
 st.title("📡 Internet Usage Dashboard")
@@ -65,7 +66,17 @@ if uploaded_file is not None:
         .rename(columns={'Start Date': 'Date', 'MB Consumption': 'Total MB'})
     )
     usage_by_date['Usage'] = convert_units(usage_by_date['Total MB'], unit)
+    
+    # Get the full date range for the selected month
+    from calendar import monthrange
+    start_day = datetime(selected_year, selected_month, 1)
+    end_day = datetime(selected_year, selected_month, monthrange(selected_year, selected_month)[1])
+    full_dates = pd.date_range(start=start_day, end=end_day)
 
+    # Find missing dates
+    recorded_dates = pd.to_datetime(usage_by_date['Date'])
+    missing_dates = full_dates.difference(recorded_dates)
+    
     # Monthly stats
     monthly_total = filtered_df['MB Consumption'].sum()
     monthly_avg_daily = monthly_total / usage_by_date.shape[0] if usage_by_date.shape[0] > 0 else 0
@@ -105,6 +116,12 @@ if uploaded_file is not None:
     ax.set_title("Daily Internet Usage")
     ax.tick_params(axis='x', rotation=45)
     st.pyplot(fig)
+    # Display in Streamlit
+    if not missing_dates.empty:
+        st.subheader("⚠️ Missing Dates (No Internet Usage Recorded)")
+        st.write(pd.DataFrame(missing_dates, columns=["Missing Date"]))
+    else:
+        st.success("✅ No missing dates — usage data is complete for this month.")
 
 else:
     st.info("Upload a CSV file to begin. Format: `Ip-Mac, Start Date, Start Time, End Date, End Time, MB Consumption`")
